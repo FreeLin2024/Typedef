@@ -73,9 +73,6 @@
 #define SC_RESTRICT                 restrict
 #else
 #define SC_RESTRICT     
-/*cppcheck-suppress  misra-c2012-8.14    */
-#define restrict                    SC_STATIC_ASSERT(0)
-/*#define __restrict                SC_STATIC_ASSERT(0)*/
 #endif
 #endif
 
