@@ -4,33 +4,110 @@
 #include "sc_typedef_type.h"
 
 
-/*============================ 强制转换 定义 ============================*/
-#if defined(SC_CONFIG_TYPE_CAST) && SC_CONFIG_TYPE_CAST != 0
-#define SC_REINTERPRET_CAST(x,y)    (reinterpret_cast<x>(y))
-#define SC_CONST_CAST(x,y)          (const_cast<x>(y))
-#define SC_STATIC_CAST(x,y)         (static_cast<x>(y))
+/*============================ 静态检查实现 ============================*/
+
+#define SC_CFG_STATIC_ASSERT_COVER   (-1) /*  覆盖设置  */
+#define SC_CFG_STATIC_ASSERT_AUTO    0    /*  自动判断  */
+#define SC_CFG_STATIC_ASSERT_GENERAL 1    /*  兼容模式  */
+#define SC_CFG_STATIC_ASSERT_LINE    2    /*  LINE模式  */
+#define SC_CFG_STATIC_ASSERT_C11     3    /*  C11模式   */
+
+#if defined(SC_STATIC_ASSERT) /*使用已定义的*/
+#define SC_CONF_STATIC_ASSERT SC_CFG_STATIC_ASSERT_COVER
 #else
-#define SC_REINTERPRET_CAST(x,y)    ((x)(y))
-#define SC_CONST_CAST(x,y)          ((x)(y))
-#define SC_STATIC_CAST(x,y)         ((x)(y))
+
+#if defined(SC_CONFIG_STATIC_ASSERT) &&                                  \
+    SC_CONFIG_STATIC_ASSERT > SC_CFG_STATIC_ASSERT_AUTO &&          \
+    SC_CONFIG_STATIC_ASSERT <= SC_CFG_STATIC_ASSERT_C11
+#define SC_CONF_STATIC_ASSERT SC_CONFIG_STATIC_ASSERT
+#elif defined(__LINE__)
+#define SC_CONF_STATIC_ASSERT SC_CFG_STATIC_ASSERT_LINE
+#else
+#define SC_CONF_STATIC_ASSERT SC_CFG_STATIC_ASSERT_GENERAL
+#endif
+
+#if SC_CONF_STATIC_ASSERT == SC_CFG_STATIC_ASSERT_C11
+#define SC_CONF_STATIC_ASSERT_CORE  _Static_assert
+#endif
+
+#if SC_CONF_STATIC_ASSERT == SC_CFG_STATIC_ASSERT_LINE
+#define SC_CFG_STATIC_ASSERT_SRC(in, in_line) typedef void(SC_DEFINE_LINK(*sc_static_assert_fun, in_line)[((svar8_t)(((in) ? 1 : -1)))])(void)
+#define SC_CONF_STATIC_ASSERT_CORE(in) SC_CFG_STATIC_ASSERT_SRC(in, __LINE__)
+#endif
+
+#if SC_CONF_STATIC_ASSERT == SC_CFG_STATIC_ASSERT_GENERAL
+/*注意 该模式静态检查可能不通过 但是是符合 程序设计的 */
+#define SC_CONF_STATIC_ASSERT_CORE(in) extern const var8_t sc_static_assert_data[((in) ? 1 : -1)]
+#endif
+
+#define SC_STATIC_ASSERT(in)  SC_CONF_STATIC_ASSERT_CORE(in)
+
+
 #endif
 
 
-/*============================ restrict ============================*/
+/*============================ 检查 ============================*/
 
-#if defined(SC_CONFIG_RESTRICT_SET)
-#define SC_RESTRICT             SC_CONFIG_RESTRICT_SET
-#else
-#if defined(SC_CONFIG_RESTRICT) && SC_CONFIG_RESTRICT != 0
-/*cppcheck-suppress  misra-c2012-8.14    */
-#define SC_RESTRICT             restrict
-#else
-#define SC_RESTRICT     
-/*cppcheck-suppress  misra-c2012-8.14    */
-#define restrict                SC_STATIC_ASSERT(0)
-/*#define __restrict              SC_STATIC_ASSERT(0)*/
+SC_STATIC_ASSERT(sizeof(var1_t) == 1U);
+
+SC_STATIC_ASSERT(sizeof(varchar_t) == 1U);
+
+SC_STATIC_ASSERT(sizeof(var8_t) == 1U);
+SC_STATIC_ASSERT(sizeof(svar8_t) == 1U);
+
+SC_STATIC_ASSERT(sizeof(var16_t) == 2U);
+SC_STATIC_ASSERT(sizeof(svar16_t) == 2U);
+
+SC_STATIC_ASSERT(sizeof(var32_t) == 4U);
+SC_STATIC_ASSERT(sizeof(svar32_t) == 4U);
+
+
+SC_STATIC_ASSERT(sizeof(svar_t) == sizeof(var_t));
+
+SC_STATIC_ASSERT(sizeof(const void*) == sizeof( void*));
+
+SC_STATIC_ASSERT(sizeof(varptr_t) >= sizeof( void*));
+SC_STATIC_ASSERT(sizeof(varptr_t) >= sizeof(ptrdiff_t));
+SC_STATIC_ASSERT(sizeof(varptr_t) >= sizeof(size_t));
+SC_STATIC_ASSERT(sizeof(varptr_t) >= sizeof(var_t));
+SC_STATIC_ASSERT(sizeof(varptr_t) == sizeof(svarptr_t));
+
+
+SC_STATIC_ASSERT(sizeof(varmax_t) >= sizeof(var_t));
+SC_STATIC_ASSERT(sizeof(varmax_t) >= sizeof(varfloat32_t));
+SC_STATIC_ASSERT(sizeof(varmax_t) >= sizeof(varwchar_t));
+SC_STATIC_ASSERT(sizeof(varmax_t) >= sizeof(ptrdiff_t));
+SC_STATIC_ASSERT(sizeof(varmax_t) >= sizeof(size_t));
+SC_STATIC_ASSERT(sizeof(varmax_t) >= sizeof(long));
+SC_STATIC_ASSERT(sizeof(varmax_t) >= sizeof( svar32_t));
+SC_STATIC_ASSERT(sizeof(varmax_t) >= sizeof(varptr_t));
+SC_STATIC_ASSERT(sizeof(varmax_t) >= sizeof( void*));
+SC_STATIC_ASSERT(sizeof(varmax_t) == sizeof(svarmax_t));
+SC_STATIC_ASSERT(sizeof(varmax_t) <= 8U);
+
+SC_STATIC_ASSERT(sizeof(varchar_t) == 1U);
+SC_STATIC_ASSERT(sizeof(varchar_t) == sizeof(char));
+
+SC_STATIC_ASSERT((sizeof(varwchar_t) == 1U) || (sizeof(varwchar_t) == 2U) || (sizeof(varwchar_t) == 4U )|| (sizeof(varwchar_t) == 8U));
+
+#if defined(SC_CONFIG_WCHAR_SUPPORT)
+SC_STATIC_ASSERT(sizeof(varwchar_t) == sizeof(L'\0'));
 #endif
+
+SC_STATIC_ASSERT(sizeof(varfloat32_t) == 4U);
+
+#if defined(SC_CONF_LLONG_SUPPORT)
+SC_STATIC_ASSERT(sizeof(long long ));
 #endif
+
+SC_STATIC_ASSERT((sizeof(var_t) == sizeof(var16_t)) || (sizeof(var_t) == sizeof(var32_t)) || (sizeof(var_t) == sizeof(varmax_t)));
+
+SC_STATIC_ASSERT((sizeof(varmax_t) == 4U) || (sizeof(varmax_t) == 8U));
+SC_STATIC_ASSERT(SC_CONF_64BIT_SUPPORT == (sizeof(varmax_t) == 8U));
+
+
+
+
 
 /*============================ 禁止使用 检查 列表 ============================*/
 
