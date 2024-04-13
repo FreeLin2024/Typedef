@@ -113,6 +113,10 @@ SC_STATIC_ASSERT(SC_CONF_64BIT_SUPPORT == (sizeof(varmax_t) == 8U));
 
 #if defined(SC_CONFIG_USE_CHECKLISTS) && SC_CONFIG_USE_CHECKLISTS == 1U
 
+/*cppcheck-suppress  misra-c2012-8.14    */
+#define restrict            SC_STATIC_ASSERT(0)
+/*#define __restrict        SC_STATIC_ASSERT(0)*/
+
 /*--------------  C 关键字   --------------*/
 
 #define register            SC_STATIC_ASSERT(0)
