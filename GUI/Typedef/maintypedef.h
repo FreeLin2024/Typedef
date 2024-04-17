@@ -15,7 +15,15 @@ public:
     MainTypedef(QWidget *parent = nullptr);
     ~MainTypedef();
 
+private slots:
+
+    void on_pushButton_clicked();
+
+
 private:
+    QString save;
+    void core(void);
     Ui::MainTypedef *ui;
+
 };
 #endif // MAINTYPEDEF_H
